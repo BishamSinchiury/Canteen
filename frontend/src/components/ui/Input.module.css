@@ -1,0 +1,99 @@
+.inputWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.required {
+    color: var(--danger-color);
+    margin-left: 4px;
+}
+
+.inputContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input {
+    width: 100%;
+    padding: 10px 14px;
+    font-family: var(--font-family);
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 4px var(--primary-50);
+}
+
+.input:disabled {
+    background-color: var(--gray-50);
+    cursor: not-allowed;
+    color: var(--text-tertiary);
+}
+
+/* Error State */
+.error .input {
+    border-color: var(--danger-color);
+}
+
+.error .input:focus {
+    box-shadow: 0 0 0 4px #fef2f2;
+}
+
+.errorMessage {
+    font-size: 0.75rem;
+    color: var(--danger-color);
+    font-weight: var(--font-weight-medium);
+}
+
+/* With Icon */
+.hasIcon .input {
+    padding-left: 42px;
+}
+
+.icon {
+    position: absolute;
+    left: 14px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+/* Size Variants */
+.sm .input {
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+}
+
+.lg .input {
+    padding: 14px 18px;
+    font-size: 1rem;
+}
+
+/* Textarea */
+.textarea {
+    min-height: 100px;
+    resize: vertical;
+}

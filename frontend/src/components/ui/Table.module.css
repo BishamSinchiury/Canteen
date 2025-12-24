@@ -1,0 +1,135 @@
+.tableWrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    background: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    background: white;
+}
+
+.table th {
+    text-align: left;
+    padding: 14px 20px;
+    background-color: var(--gray-50);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--text-primary);
+    background: white;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr {
+    transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+    background-color: var(--gray-50);
+}
+
+.clickable tbody tr {
+    cursor: pointer;
+}
+
+.clickable tbody tr:hover {
+    background-color: var(--primary-50);
+}
+
+/* Empty State */
+.empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-tertiary);
+    background: white;
+}
+
+.emptyIcon {
+    font-size: 48px;
+    margin-bottom: var(--spacing-4);
+    opacity: 0.3;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--gray-50);
+}
+
+.paginationInfo {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.paginationButtons {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.paginationBtn {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-weight: var(--font-weight-medium);
+}
+
+.paginationBtn:hover:not(:disabled) {
+    background: var(--gray-100);
+    border-color: var(--gray-300);
+}
+
+.paginationBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.paginationBtnActive {
+    background: var(--primary-600);
+    color: white;
+    border-color: var(--primary-600);
+}
+
+/* Sortable Headers */
+.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.sortable:hover {
+    background-color: var(--gray-100);
+}
+
+.sortIcon {
+    margin-left: var(--spacing-1);
+    opacity: 0.4;
+}
+
+.sortActive {
+    opacity: 1;
+}

@@ -1,0 +1,213 @@
+.dashboard {
+    animation: fadeIn var(--transition-normal);
+    padding-bottom: var(--spacing-10);
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-6);
+    margin-bottom: var(--spacing-8);
+}
+
+/* StatCard styling enhancement is handled in Card.module.css, 
+   but we can add container specific overrides here if needed */
+
+.quickActions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-6);
+    margin-bottom: var(--spacing-10);
+}
+
+.actionCard {
+    background: var(--bg-card);
+    padding: var(--spacing-6);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+    text-decoration: none;
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+}
+
+.actionCard:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-300);
+}
+
+.actionIcon {
+    width: 56px;
+    height: 56px;
+    background: var(--primary-50);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all var(--transition-normal);
+}
+
+.actionCard:hover .actionIcon {
+    background: var(--primary-500);
+    color: white;
+    transform: scale(1.1);
+}
+
+.actionContent h4 {
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    font-weight: var(--font-weight-bold);
+}
+
+.actionContent p {
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+}
+
+.twoColumn {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-8);
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-4);
+}
+
+.sectionTitle {
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+.viewAllLink {
+    font-size: 0.875rem;
+    color: var(--primary-600);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+}
+
+.recentTransactions,
+.topItems {
+    background: var(--bg-card);
+    padding: var(--spacing-6);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.transactionsList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+}
+
+.transactionItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.transactionItem:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-100);
+}
+
+.txInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.txIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.txCash {
+    background: #ecfdf5;
+    color: #10b981;
+}
+
+.txCredit {
+    background: #fffaeb;
+    color: #f59e0b;
+}
+
+.txDetails h5 {
+    font-size: 0.9375rem;
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: 2px;
+}
+
+.txDetails span {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.txAmount {
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+.topItemsList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.topItem {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+}
+
+.itemRank {
+    width: 28px;
+    height: 28px;
+    background: var(--gray-100);
+    color: var(--text-secondary);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: var(--font-weight-bold);
+}
+
+.itemName {
+    flex: 1;
+    font-size: 0.9375rem;
+    font-weight: var(--font-weight-medium);
+}
+
+.itemCount {
+    font-size: 0.75rem;
+    background: var(--primary-50);
+    color: var(--primary-700);
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
+    font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 1024px) {
+    .twoColumn {
+        grid-template-columns: 1fr;
+    }
+}

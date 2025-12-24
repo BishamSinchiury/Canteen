@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: canteenuser
+      POSTGRES_PASSWORD: "eecohm@0411"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U canteenuser -d db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    command: bash -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py seed && gunicorn -c gunicorn.conf.py canteen.wsgi:application"
+    volumes:
+      - ./backend:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - '8000:8000'
+    expose:
+      - '8000'
+    environment:
+      - DATABASE_URL=postgres://canteenuser:eecohm%400411@db:5432/db
+      - SECRET_KEY=prod-secret-key-change-this
+      - DEBUG=0
+      - ALLOWED_HOSTS=*
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - build_volume:/app/build
+    command: npm run build
+
+  nginx:
+    image: nginx:stable
+    restart: always
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+      - build_volume:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  build_volume:

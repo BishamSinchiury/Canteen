@@ -1,0 +1,116 @@
+.card {
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.cardHover:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.cardHeader {
+    padding: var(--spacing-4) var(--spacing-6);
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--gray-50);
+}
+
+.cardTitle {
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.cardSubtitle {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+}
+
+.cardBody {
+    padding: var(--spacing-6);
+}
+
+.cardFooter {
+    padding: var(--spacing-4) var(--spacing-6);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--gray-50);
+}
+
+/* Stat Card */
+.statCard {
+    padding: var(--spacing-6);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.statContent {
+    flex: 1;
+}
+
+.statLabel {
+    font-size: 0.8125rem;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.statValue {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.statIcon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all var(--transition-normal);
+}
+
+.statIconPrimary {
+    background-color: var(--primary-50);
+    color: var(--primary-600);
+}
+
+.statIconSuccess {
+    background-color: #ecfdf5;
+    color: #10b981;
+}
+
+.statIconWarning {
+    background-color: #fffbeb;
+    color: #f59e0b;
+}
+
+.statIconDanger {
+    background-color: #fef2f2;
+    color: #ef4444;
+}
+
+/* Subtle background glow for stat cards */
+.statCard::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, var(--primary-50) 0%, transparent 70%);
+    opacity: 0.5;
+    z-index: 0;
+}

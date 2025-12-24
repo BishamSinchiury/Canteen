@@ -1,0 +1,134 @@
+.loginPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.6)), url('/assets/login_bg.png');
+  background-size: cover;
+  background-position: center;
+  padding: var(--spacing-4);
+  font-family: var(--font-family);
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-10) var(--spacing-8);
+  box-shadow: var(--shadow-xl);
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loginHeader {
+  text-align: center;
+}
+
+.logo {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-4);
+  display: inline-block;
+  padding: var(--spacing-4);
+  background: var(--primary-50);
+  border-radius: var(--radius-full);
+}
+
+.schoolName {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-1);
+}
+
+.schoolAddress {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-2);
+}
+
+.subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-6);
+}
+
+.error {
+  background-color: #fef2f2;
+  border-left: 4px solid var(--danger-color);
+  color: var(--danger-color);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
+}
+
+.formGroup {
+  margin-bottom: var(--spacing-4);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: var(--spacing-4);
+  background: var(--primary-600);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-semibold);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--primary-700);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+}
+
+.submitBtn:disabled {
+  background: var(--gray-300);
+  cursor: not-allowed;
+}
+
+.footer {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--spacing-4);
+}
+
+@media (max-width: 480px) {
+  .loginCard {
+    padding: var(--spacing-6) var(--spacing-4);
+  }
+}

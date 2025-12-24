@@ -1,0 +1,10 @@
+{
+  "info": {
+    "name": "Canteen API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    { "name": "Obtain Token", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": { "raw": "http://localhost:8000/api/auth/token/", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["api", "auth", "token"] }, "body": { "mode": "raw", "raw": "{\"username\":\"cashier\",\"password\":\"cashierpass\"}" } } },
+    { "name": "Create Transaction", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "http://localhost:8000/api/transactions/" , "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["api", "transactions"] }, "body": { "mode": "raw", "raw": "{\"payment_type\":\"cash\",\"lines\":[{\"food_item\":1,\"portion_type\":\"full\",\"unit_price\":\"10.00\",\"quantity\":1}]}" } } }
+  ]
+}

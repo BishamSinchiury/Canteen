@@ -1,0 +1,133 @@
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from django.db import transaction
+from django.utils import timezone
+from .models import Vendor, Ingredient, StockMovement, Recipe, RecipeIngredient, PurchaseOrder, PurchaseOrderItem
+from .serializers import (
+    VendorSerializer, IngredientSerializer, StockMovementSerializer,
+    RecipeSerializer, RecipeIngredientSerializer, PurchaseOrderSerializer
+)
+
+class VendorViewSet(viewsets.ModelViewSet):
+    queryset = Vendor.objects.all()
+    serializer_class = VendorSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class IngredientViewSet(viewsets.ModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    @action(detail=True, methods=['post'])
+    def adjust_stock(self, request, pk=None):
+        ingredient = self.get_object()
+        quantity = request.data.get('quantity')
+        reason = request.data.get('reason')
+        movement_type = request.data.get('movement_type')  # IN/OUT/ADJUST
+        notes = request.data.get('notes', '')
+
+        if quantity is None or reason is None or movement_type is None:
+            return Response({'error': 'quantity, reason, and movement_type are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            quantity = float(quantity)
+        except ValueError:
+            return Response({'error': 'Invalid quantity'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            # Create movement
+            StockMovement.objects.create(
+                ingredient=ingredient,
+                quantity=quantity,
+                movement_type=movement_type,
+                reason=reason,
+                user=request.user,
+                notes=notes
+            )
+            # Update current quantity
+            if movement_type == 'IN':
+                ingredient.current_quantity += quantity
+            elif movement_type == 'OUT':
+                ingredient.current_quantity -= quantity
+            elif movement_type == 'ADJUST':
+                ingredient.current_quantity = quantity # Set absolute value for audit correction
+            
+            ingredient.save()
+
+        return Response(IngredientSerializer(ingredient).data)
+
+class StockMovementViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = StockMovement.objects.all().order_by('-timestamp')
+    serializer_class = StockMovementSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filterset_fields = ['ingredient', 'movement_type', 'reason']
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    @action(detail=True, methods=['post'])
+    def set_ingredients(self, request, pk=None):
+        recipe = self.get_object()
+        ingredients_data = request.data.get('ingredients', [])
+        
+        with transaction.atomic():
+            recipe.ingredients.all().delete()
+            for item in ingredients_data:
+                RecipeIngredient.objects.create(
+                    recipe=recipe,
+                    ingredient_id=item['ingredient'],
+                    quantity=item['quantity']
+                )
+        
+        return Response(RecipeSerializer(recipe).data)
+
+class PurchaseOrderViewSet(viewsets.ModelViewSet):
+    queryset = PurchaseOrder.objects.all().order_by('-created_at')
+    serializer_class = PurchaseOrderSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def receive_stock(self, request, pk=None):
+        po = self.get_object()
+        if po.status == 'RECEIVED':
+            return Response({'error': 'PO already received'}, status=status.HTTP_400_BAD_REQUEST)
+
+        items_data = request.data.get('items', []) # List of {id, received_quantity}
+        
+        with transaction.atomic():
+            for item_data in items_data:
+                try:
+                    po_item = po.items.get(id=item_data['id'])
+                    received_qty = float(item_data['received_quantity'])
+                    
+                    po_item.received_quantity = received_qty
+                    po_item.save()
+
+                    # Update Inventory
+                    ingredient = po_item.ingredient
+                    ingredient.current_quantity += received_qty
+                    ingredient.save()
+
+                    # Create Movement
+                    StockMovement.objects.create(
+                        ingredient=ingredient,
+                        quantity=received_qty,
+                        movement_type='IN',
+                        reason='PURCHASE',
+                        reference=f'PO #{po.id}',
+                        user=request.user
+                    )
+                except (PurchaseOrderItem.DoesNotExist, ValueError):
+                    continue
+
+            po.status = 'RECEIVED'
+            po.received_at = timezone.now()
+            po.save()
+
+        return Response(PurchaseOrderSerializer(po).data)

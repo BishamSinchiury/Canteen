@@ -1,0 +1,20 @@
+// Pages Index - Lazy loaded for code splitting
+import { lazy } from 'react'
+
+export const Dashboard = lazy(() => import('./Dashboard'))
+export const POS = lazy(() => import('./POS'))
+export const Transactions = lazy(() => import('./Transactions'))
+export const TransactionDetail = lazy(() => import('./TransactionDetail'))
+export const MenuManagement = lazy(() => import('./MenuManagement'))
+export const StudentAccounts = lazy(() => import('./StudentAccounts'))
+export const TeacherAccounts = lazy(() => import('./TeacherAccounts'))
+export const AccountDetail = lazy(() => import('./AccountDetail'))
+export const Cashbook = lazy(() => import('./Cashbook'))
+export const Expenses = lazy(() => import('./Expenses'))
+export const Reports = lazy(() => import('./Reports'))
+export const Users = lazy(() => import('./Users'))
+export const Setup = lazy(() => import('./Setup'))
+export const Vendors = lazy(() => import('./inventory/Vendors'))
+export const Ingredients = lazy(() => import('./inventory/Ingredients'))
+export const Recipes = lazy(() => import('./inventory/Recipes'))
+export const PurchaseOrders = lazy(() => import('./inventory/PurchaseOrders'))
