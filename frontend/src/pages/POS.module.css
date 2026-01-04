@@ -434,7 +434,7 @@
 
 @media print {
     .posPage {
-        display: none;
+        display: none !important;
     }
 
     .printOnlyWrapper {

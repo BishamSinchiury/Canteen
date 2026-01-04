@@ -150,44 +150,48 @@
   min-height: 50mm;
   padding-bottom: 5mm;
   border-bottom: 2px dashed #333;
-  /* Visual separation if printer doesn't cut */
 }
 
 /* Print Styles */
 @media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   .printOnlyWrapper {
     display: block !important;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    z-index: 9999;
-    background: white;
+    width: 80mm;
+    margin: 0;
+    padding: 0;
   }
 
   .receipt {
     width: 100%;
-    max-width: 80mm;
-    margin: 0 auto;
-    padding: 0;
+    padding: 5mm;
+    margin: 0;
     box-shadow: none;
+    border: none;
+    background: white;
+    color: black;
   }
 
-  /* Ensure page breaks work */
   .tokenPage {
     page-break-after: always;
     break-after: page;
+    page-break-inside: avoid;
     break-inside: avoid;
     border: none;
-    /* Printer usually cuts or we rely on page break */
+    margin-bottom: 5mm;
   }
 
-  :global(body) * {
-    visibility: hidden;
-  }
-
-  .printOnlyWrapper,
-  .printOnlyWrapper * {
-    visibility: visible;
+  .tokenPage:last-child {
+    page-break-after: auto;
+    margin-bottom: 0;
   }
 }

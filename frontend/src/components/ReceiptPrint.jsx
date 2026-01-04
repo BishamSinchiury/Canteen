@@ -5,7 +5,11 @@ import styles from './ReceiptPrint.module.css'
  * Receipt Print Component - Thermal printer friendly (80mm width)
  */
 const ReceiptPrint = forwardRef(({ payload }, ref) => {
-  if (!payload || !payload.items || payload.items.length === 0) return null
+  console.log('ReceiptPrint received:', payload)
+  if (!payload || !payload.items || payload.items.length === 0) {
+    console.log('ReceiptPrint: Invalid payload, returning null')
+    return null
+  }
 
   const { institution, transaction_id, date, items, payment } = payload
 
@@ -57,6 +61,18 @@ const ReceiptPrint = forwardRef(({ payload }, ref) => {
               <span>Payment:</span>
               <span style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{payment?.type}</span>
             </div>
+            {payload.account_name && (
+              <div className={styles.metaRow}>
+                <span>Account:</span>
+                <span style={{ fontWeight: 'bold', maxWidth: '120px', textAlign: 'right', wordBreak: 'break-word' }}>{payload.account_name}</span>
+              </div>
+            )}
+            {payload.cash_paid && (
+              <div className={styles.metaRow}>
+                <span>Cash Paid:</span>
+                <span>Rs. {parseFloat(payload.cash_paid).toFixed(2)}</span>
+              </div>
+            )}
           </div>
 
           <div className={styles.divider} />

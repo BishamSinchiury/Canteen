@@ -129,14 +129,37 @@ export default function POS() {
 
             // Get receipt and trigger print
             const receipt = await getReceipt(tx.id)
-            setReceiptPayload(receipt.payload)
+
+
+            // Enrich payload with local data for printing
+            let finalPayload = { ...receipt.payload }
+
+            if ((paymentType === 'credit' || paymentType === 'mixed') && selectedAccount) {
+                const account = accounts.find(a => a.account_id == selectedAccount)
+                if (account) {
+                    finalPayload.account_name = account.name
+                }
+            }
+
+            if (paymentType === 'mixed' && printCashAmount) {
+                finalPayload.cash_paid = printCashAmount
+            }
+
+            setReceiptPayload(finalPayload)
+
+            // Debug: Log payload to verify data
+            console.log('Receipt Payload:', finalPayload)
 
             toast.success(`Transaction #${tx.id} completed successfully!`)
 
-            // Trigger print dialog after a short delay
-            setTimeout(() => {
-                window.print()
-            }, 300)
+            // Trigger print immediately
+            // Note: For truly silent printing to a thermal printer, configure the default printer in Windows
+            // and use browser flags: --kiosk-printing or use a dedicated thermal printer library
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    window.print()
+                })
+            })
 
             clearCart()
         } catch (err) {
