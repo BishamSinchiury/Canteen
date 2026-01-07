@@ -1,13 +1,8 @@
 import React, { forwardRef } from 'react'
-import styles from './ReceiptPrint.module.css'
+import '../pages/Print.css' // Import global styles from pages folder
 
-/**
- * Receipt Print Component - Thermal printer friendly (80mm width)
- */
 const ReceiptPrint = forwardRef(({ payload }, ref) => {
-  console.log('ReceiptPrint received:', payload)
   if (!payload || !payload.items || payload.items.length === 0) {
-    console.log('ReceiptPrint: Invalid payload, returning null')
     return null
   }
 
@@ -31,76 +26,71 @@ const ReceiptPrint = forwardRef(({ payload }, ref) => {
     })
   }
 
-  // Render a token for each item
   return (
-    <div className={styles.receipt} ref={ref}>
+    <div ref={ref} className="thermal-receipt"> {/* Global class */}
       {items.map((item, index) => (
-        <div key={index} className={styles.tokenPage}>
+        <div key={index} style={{ pageBreakAfter: 'always', paddingBottom: '10px' }}>
+
           {/* Header */}
-          <div className={styles.receiptHeader}>
-            <h1 className={styles.schoolName}>{institution?.name || 'EECOHM School of Excellence'}</h1>
-            <p className={styles.schoolAddress}>{institution?.address || 'Birtamode 1, Jhapa'}</p>
+          <div className="center">
+            <h1>{institution?.name || 'EECOHM School'}</h1>
+            <p style={{ fontSize: '10px' }}>{institution?.address || 'Birtamode 1, Jhapa'}</p>
           </div>
 
+          <div className="divider" />
+
           {/* Token Info */}
-          <div className={styles.token}>
+          <div className="center bold" style={{ fontSize: '14px', margin: '5px 0' }}>
             TOKEN #{transaction_id}-{index + 1}
           </div>
 
-          {/* Core Details */}
-          <div className={styles.receiptMeta}>
-            <div className={styles.metaRow}>
-              <span>Date:</span>
-              <span>{formatDate(date)} {formatTime(date)}</span>
-            </div>
-            <div className={styles.metaRow}>
-              <span>Tx ID:</span>
-              <span>#{transaction_id}</span>
-            </div>
-            <div className={styles.metaRow}>
-              <span>Payment:</span>
-              <span style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{payment?.type}</span>
-            </div>
-            {payload.account_name && (
-              <div className={styles.metaRow}>
-                <span>Account:</span>
-                <span style={{ fontWeight: 'bold', maxWidth: '120px', textAlign: 'right', wordBreak: 'break-word' }}>{payload.account_name}</span>
-              </div>
-            )}
-            {payload.cash_paid && (
-              <div className={styles.metaRow}>
-                <span>Cash Paid:</span>
-                <span>Rs. {parseFloat(payload.cash_paid).toFixed(2)}</span>
-              </div>
-            )}
-          </div>
+          <div className="divider" />
 
-          <div className={styles.divider} />
+          {/* Meta */}
+          <div className="row">
+            <span>Date:</span>
+            <span>{formatDate(date)} {formatTime(date)}</span>
+          </div>
+          <div className="row">
+            <span>Tx ID:</span>
+            <span>#{transaction_id}</span>
+          </div>
+          <div className="row">
+            <span>Payment:</span>
+            <span className="bold" style={{ textTransform: 'uppercase' }}>{payment?.type}</span>
+          </div>
+          {payload.account_name && (
+            <div className="row">
+              <span>Account:</span>
+              <span className="bold">{payload.account_name}</span>
+            </div>
+          )}
+          {payload.cash_paid && (
+            <div className="row">
+              <span>Cash Paid:</span>
+              <span>Rs. {parseFloat(payload.cash_paid).toFixed(2)}</span>
+            </div>
+          )}
+
+          <div className="divider" />
 
           {/* Item Details */}
-          <div style={{ margin: '10px 0' }}>
-            <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>
-              {item.name}
+          <div style={{ margin: '5px 0' }}>
+            <div className="bold" style={{ fontSize: '14px' }}>{item.name}</div>
+            <div className="row">
+              <span>Portion: {item.portion}</span>
+              <span className="bold">Qty: {item.quantity}</span>
             </div>
-            <div className={styles.metaRow}>
-              <span>Portion:</span>
-              <span>{item.portion}</span>
-            </div>
-            <div className={styles.metaRow} style={{ marginTop: '4px' }}>
-              <span style={{ fontWeight: 'bold' }}>Quantity:</span>
-              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{item.quantity}</span>
-            </div>
-            <div className={styles.metaRow} style={{ marginTop: '4px' }}>
-              <span>Total Amount:</span>
+            <div className="row">
+              <span>Total:</span>
               <span>Rs. {item.line_total?.toFixed(2)}</span>
             </div>
           </div>
 
-          <div className={styles.divider} />
+          <div className="divider" />
 
-          {/* Footer */}
-          <div className={styles.footer} style={{ marginTop: '5px', paddingTop: '5px', border: 'none' }}>
-            <p className={styles.footerNote} style={{ fontSize: '9px' }}>Keep this token for order collection</p>
+          <div className="center" style={{ fontSize: '10px', marginTop: '5px' }}>
+            Keep for collection
           </div>
         </div>
       ))}
@@ -109,5 +99,4 @@ const ReceiptPrint = forwardRef(({ payload }, ref) => {
 })
 
 ReceiptPrint.displayName = 'ReceiptPrint'
-
 export default ReceiptPrint

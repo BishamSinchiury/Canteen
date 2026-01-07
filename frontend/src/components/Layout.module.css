@@ -74,9 +74,3 @@
     width: 100%;
   }
 }
-
-@media print {
-  .appGrid {
-    display: none !important;
-  }
-}

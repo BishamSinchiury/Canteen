@@ -12,10 +12,12 @@ const menuConfig = {
     { section: 'Inventory' },
     { to: '/inventory/vendors', label: 'Vendors', icon: '🏪' },
     { to: '/inventory/ingredients', label: 'Stock', icon: '📦' },
-    { to: '/inventory/recipes', label: 'Recipes', icon: '📖' },
-    { to: '/inventory/purchase-orders', label: 'Orders', icon: '📄' },
-    { section: 'Management' },
+    { to: '/inventory/purchase-orders', label: 'Orders', icon: '�' },
+    { section: 'Menu Management' },
     { to: '/menu', label: 'Menu Items', icon: '🍽️' },
+    { to: '/menu/stock-management', label: 'Stock Mgmt', icon: '🏭' },
+    { to: '/inventory/recipes', label: 'Recipes', icon: '📖' },
+    { section: 'Account Management' },
     { to: '/accounts/students', label: 'Student Accounts', icon: '🎓' },
     { to: '/accounts/teachers', label: 'Teacher Accounts', icon: '👨‍🏫' },
     { section: 'Finance' },
@@ -33,10 +35,12 @@ const menuConfig = {
     { section: 'Inventory' },
     { to: '/inventory/vendors', label: 'Vendors', icon: '🏪' },
     { to: '/inventory/ingredients', label: 'Stock', icon: '📦' },
-    { to: '/inventory/recipes', label: 'Recipes', icon: '📖' },
-    { to: '/inventory/purchase-orders', label: 'Orders', icon: '📄' },
-    { section: 'Management' },
+    { to: '/inventory/purchase-orders', label: 'Orders', icon: '�' },
+    { section: 'Menu Management' },
     { to: '/menu', label: 'Menu Items', icon: '🍽️' },
+    { to: '/menu/stock-management', label: 'Stock Mgmt', icon: '🏭' },
+    { to: '/inventory/recipes', label: 'Recipes', icon: '📖' },
+    { section: 'Account Management' },
     { to: '/accounts/students', label: 'Student Accounts', icon: '🎓' },
     { to: '/accounts/teachers', label: 'Teacher Accounts', icon: '👨‍🏫' },
     { section: 'Finance' },
@@ -81,6 +85,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 isActive ? `${styles.item} ${styles.active}` : styles.item
               }
               end={item.to === '/'}
+              title={item.label}
             >
               <span className={styles.icon} aria-hidden>{item.icon}</span>
               <span className={styles.label}>{item.label}</span>

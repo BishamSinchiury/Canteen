@@ -10,11 +10,29 @@ class Vendor(models.Model):
     address = models.TextField(blank=True)
     notes = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Positive = We owe them, Negative = They owe us")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} (Bal: {self.balance})"
+
+class VendorTransaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('CREDIT', 'Credit (Purchase)'),
+        ('DEBIT', 'Debit (Payment)'),
+    ]
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='transactions')
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    reference = models.CharField(max_length=100, blank=True, help_text="PO # or Payment Ref")
+    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.vendor.name} - {self.transaction_type} {self.amount}"
 
 class Ingredient(models.Model):
     UNIT_CHOICES = [
@@ -87,7 +105,12 @@ class PurchaseOrder(models.Model):
         ('RECEIVED', 'Received'),
         ('CANCELLED', 'Cancelled'),
     ]
-    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='purchase_orders')
+    PAYMENT_METHOD_CHOICES = [
+        ('CREDIT', 'Credit'),
+        ('CASH', 'Cash'),
+    ]
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='purchase_orders', null=True, blank=True)
+    payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES, default='CREDIT')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     notes = models.TextField(blank=True)

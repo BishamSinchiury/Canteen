@@ -76,6 +76,34 @@ def create_transaction_atomic(cashier, payment_type, lines_data, tax=0, discount
     This ensures balance updates, cashbook entries, and receipt creation all succeed or fail together.
     """
     with transaction.atomic():
+        # CRITICAL: Validate stock availability BEFORE creating transaction
+        from menu.models import FoodItem
+        
+        for l in lines_data:
+            # Handle serializer providing instance vs raw ID
+            fi_input = l['food_item']
+            fi_id = fi_input.id if hasattr(fi_input, 'id') else fi_input
+
+            # Use select_for_update to lock the row and prevent race conditions
+            food_item = FoodItem.objects.select_for_update().get(id=fi_id)
+            quantity = int(l['quantity'])
+            
+            # Check pre-made stock
+            if food_item.stock_quantity is not None:
+                if food_item.stock_quantity < quantity:
+                    raise ValueError(
+                        f"Insufficient stock for {food_item.name}. "
+                        f"Available: {food_item.stock_quantity}, Requested: {quantity}"
+                    )
+            else:
+                # Check recipe ingredients for made-to-order items
+                max_available = food_item.calculate_max_available()
+                if max_available < quantity:
+                    raise ValueError(
+                        f"Cannot make {quantity} {food_item.name}. "
+                        f"Only {max_available} can be made with current ingredients."
+                    )
+        
         # Create the transaction
         tx = Transaction.objects.create(
             cashier=cashier,

@@ -17,8 +17,11 @@ export default function PurchaseOrders() {
     const [saving, setSaving] = useState(false)
     const toast = useToast()
 
+    const [errors, setErrors] = useState({})
+
     const [form, setForm] = useState({
         vendor: '',
+        payment_method: 'CREDIT',
         notes: ''
     })
 
@@ -44,8 +47,9 @@ export default function PurchaseOrders() {
     }
 
     function openAddModal() {
-        setForm({ vendor: '', notes: '' })
+        setForm({ vendor: '', payment_method: 'CREDIT', notes: '' })
         setPoItems([{ ingredient: '', quantity: '', unit_price: '' }])
+        setErrors({})
         setShowModal(true)
     }
 
@@ -54,20 +58,41 @@ export default function PurchaseOrders() {
     }
 
     async function handleCreate() {
-        if (!form.vendor) return toast.warning('Select a vendor')
+        const newErrors = {}
+        if (form.payment_method === 'CREDIT' && !form.vendor) newErrors.vendor = 'Vendor is required for credit purchases'
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors)
+            return form.payment_method === 'CREDIT' && !form.vendor ? toast.warning('Select a vendor') : null
+        }
+
         setSaving(true)
+        setErrors({})
         try {
-            // Simplified create - API usually handles item creation too if nested serializer allows,
-            // but for this MVP I'll just send the main data and items.
-            // Note: My backend POViewSet perform_create only saves PO. 
-            // I should have handled items in perform_create or in a custom create method.
-            // Let's assume the backend serializer handles nested items.
             await createPurchaseOrder({ ...form, items: poItems })
             toast.success('Purchase Order created')
             setShowModal(false)
             loadData()
         } catch (err) {
-            toast.error('Failed to create PO')
+            console.error(err)
+            const serverErrors = {}
+            let genericMsg = err.message || 'Failed to create PO'
+
+            if (err.data) {
+                if (typeof err.data === 'object' && !err.data.detail) {
+                    for (const [key, val] of Object.entries(err.data)) {
+                        serverErrors[key] = Array.isArray(val) ? val.join(', ') : val
+                    }
+                } else if (err.data.detail) {
+                    genericMsg = err.data.detail
+                }
+            }
+
+            if (Object.keys(serverErrors).length > 0) {
+                setErrors(serverErrors)
+            } else {
+                toast.error(genericMsg)
+            }
         } finally {
             setSaving(false)
         }
@@ -148,8 +173,46 @@ export default function PurchaseOrders() {
                 }
             >
                 <div className={styles.form}>
-                    <Select label="Vendor" value={form.vendor} onChange={e => setForm({ ...form, vendor: e.target.value })}>
-                        <option value="">Select Vendor</option>
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Payment Method</label>
+                        <div style={{ display: 'flex', gap: '20px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="CREDIT"
+                                    checked={form.payment_method === 'CREDIT'}
+                                    onChange={e => setForm({ ...form, payment_method: e.target.value })}
+                                />
+                                Credit (Pay Later)
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="CASH"
+                                    checked={form.payment_method === 'CASH'}
+                                    onChange={e => {
+                                        setForm({ ...form, payment_method: e.target.value })
+                                        if (errors.vendor) setErrors(prev => ({ ...prev, vendor: null }))
+                                    }}
+                                />
+                                Cash (Paid Now)
+                            </label>
+                        </div>
+                    </div>
+
+                    <Select
+                        label="Vendor"
+                        value={form.vendor}
+                        onChange={e => {
+                            setForm({ ...form, vendor: e.target.value })
+                            if (errors.vendor) setErrors(prev => ({ ...prev, vendor: null }))
+                        }}
+                        error={errors.vendor}
+                        required={form.payment_method === 'CREDIT'}
+                    >
+                        <option value="">{form.payment_method === 'CASH' ? 'Select Vendor (Optional)' : 'Select Vendor'}</option>
                         {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                     </Select>
 

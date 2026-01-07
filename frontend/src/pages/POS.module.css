@@ -428,19 +428,7 @@
     filter: grayscale(1);
 }
 
-.printOnlyWrapper {
-    display: none;
-}
 
-@media print {
-    .posPage {
-        display: none !important;
-    }
-
-    .printOnlyWrapper {
-        display: block;
-    }
-}
 
 @media (max-width: 1200px) {
     .posPage {

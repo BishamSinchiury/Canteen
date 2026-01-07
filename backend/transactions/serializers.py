@@ -4,9 +4,10 @@ from menu.models import FoodItem
 
 
 class TransactionLineSerializer(serializers.ModelSerializer):
+    food_item_name = serializers.ReadOnlyField(source='food_item.name')
     class Meta:
         model = TransactionLine
-        fields = ('id', 'food_item', 'portion_type', 'unit_price', 'quantity', 'line_total')
+        fields = ('id', 'food_item', 'food_item_name', 'portion_type', 'unit_price', 'quantity', 'line_total')
         read_only_fields = ('id', 'line_total')
 
 

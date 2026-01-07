@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/Layout'
 import { Button, Table, Badge, Loader, useToast, Modal } from '../../components/ui'
 import Input from '../../components/ui/Input'
@@ -11,7 +12,9 @@ export default function Vendors() {
     const [showModal, setShowModal] = useState(false)
     const [editingVendor, setEditingVendor] = useState(null)
     const [saving, setSaving] = useState(false)
+    const [errors, setErrors] = useState({})
     const toast = useToast()
+    const navigate = useNavigate()
 
     const [form, setForm] = useState({
         name: '',
@@ -47,6 +50,7 @@ export default function Vendors() {
             address: '',
             notes: ''
         })
+        setErrors({})
         setShowModal(true)
     }
 
@@ -60,14 +64,29 @@ export default function Vendors() {
             address: vendor.address || '',
             notes: vendor.notes || ''
         })
+        setErrors({})
         setShowModal(true)
+    }
+
+    function handleInputChange(field, value) {
+        setForm(prev => ({ ...prev, [field]: value }))
+        if (errors[field]) {
+            setErrors(prev => ({ ...prev, [field]: null }))
+        }
     }
 
     async function handleSubmit(e) {
         e.preventDefault()
-        if (!form.name) return toast.warning('Name is required')
+        const newErrors = {}
+        if (!form.name.trim()) newErrors.name = 'Name is required'
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors)
+            return
+        }
 
         setSaving(true)
+        setErrors({})
         try {
             if (editingVendor) {
                 await updateVendor(editingVendor.id, form)
@@ -79,7 +98,25 @@ export default function Vendors() {
             setShowModal(false)
             loadVendors()
         } catch (err) {
-            toast.error(err.message || 'Failed to save vendor')
+            console.error(err)
+            const serverErrors = {}
+            let genericMsg = err.message || 'Failed to save vendor'
+
+            if (err.data) {
+                if (typeof err.data === 'object' && !err.data.detail) {
+                    for (const [key, val] of Object.entries(err.data)) {
+                        serverErrors[key] = Array.isArray(val) ? val.join(', ') : val
+                    }
+                } else if (err.data.detail) {
+                    genericMsg = err.data.detail
+                }
+            }
+
+            if (Object.keys(serverErrors).length > 0) {
+                setErrors(serverErrors)
+            } else {
+                toast.error(genericMsg)
+            }
         } finally {
             setSaving(false)
         }
@@ -89,11 +126,14 @@ export default function Vendors() {
         { header: 'Vendor Name', accessor: 'name' },
         { header: 'Contact', accessor: 'contact_name' },
         { header: 'Phone', accessor: 'phone' },
-        { header: 'Email', accessor: 'email' },
+        { header: 'Balance', accessor: 'balance', render: (row) => `Rs. ${parseFloat(row.balance || 0).toFixed(2)}` },
         {
             header: 'Actions',
             render: (row) => (
-                <Button size="sm" variant="secondary" onClick={() => openEditModal(row)}>Edit</Button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button size="sm" variant="secondary" onClick={() => openEditModal(row)}>Edit</Button>
+                    <Button size="sm" onClick={() => navigate(`/inventory/vendors/${row.id}/ledger`)}>Ledger</Button>
+                </div>
             )
         }
     ]
@@ -131,36 +171,42 @@ export default function Vendors() {
                     <Input
                         label="Vendor Name"
                         value={form.name}
-                        onChange={e => setForm({ ...form, name: e.target.value })}
+                        onChange={e => handleInputChange('name', e.target.value)}
+                        error={errors.name}
                         required
                     />
                     <Input
                         label="Contact Person"
                         value={form.contact_name}
-                        onChange={e => setForm({ ...form, contact_name: e.target.value })}
+                        onChange={e => handleInputChange('contact_name', e.target.value)}
+                        error={errors.contact_name}
                     />
                     <div className={styles.formRow}>
                         <Input
                             label="Phone"
                             value={form.phone}
-                            onChange={e => setForm({ ...form, phone: e.target.value })}
+                            onChange={e => handleInputChange('phone', e.target.value)}
+                            error={errors.phone}
                         />
                         <Input
                             label="Email"
                             type="email"
                             value={form.email}
-                            onChange={e => setForm({ ...form, email: e.target.value })}
+                            onChange={e => handleInputChange('email', e.target.value)}
+                            error={errors.email}
                         />
                     </div>
                     <Input
                         label="Address"
                         value={form.address}
-                        onChange={e => setForm({ ...form, address: e.target.value })}
+                        onChange={e => handleInputChange('address', e.target.value)}
+                        error={errors.address}
                     />
                     <Input
                         label="Notes"
                         value={form.notes}
-                        onChange={e => setForm({ ...form, notes: e.target.value })}
+                        onChange={e => handleInputChange('notes', e.target.value)}
+                        error={errors.notes}
                     />
                 </form>
             </Modal>

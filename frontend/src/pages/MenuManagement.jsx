@@ -2,16 +2,22 @@ import React, { useState, useEffect, useContext } from 'react'
 import { PageHeader } from '../components/Layout'
 import { Button, Table, Badge, Loader, useToast, Modal } from '../components/ui'
 import Input, { Select } from '../components/ui/Input'
-import { fetchFoodItems, createFoodItem, updateFoodItem, toggleFoodItemActive } from '../api'
+import { fetchFoodItems, createFoodItem, updateFoodItem, toggleFoodItemActive, fetchIngredients, fetchRecipes, createRecipe, updateRecipe, apiFetch } from '../api'
 import { AuthContext } from '../context/AuthContext'
 import styles from './common.module.css'
 import imgStyles from './inventory/Ingredients.module.css'
 
 export default function MenuManagement() {
     const [items, setItems] = useState([])
+    const [ingredients, setIngredients] = useState([])
+    const [recipes, setRecipes] = useState({})
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
+    const [showRecipeModal, setShowRecipeModal] = useState(false)
+    const [showStockModal, setShowStockModal] = useState(false)
     const [editingItem, setEditingItem] = useState(null)
+    const [recipeItem, setRecipeItem] = useState(null)
+    const [stockItem, setStockItem] = useState(null)
     const [saving, setSaving] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [imagePreview, setImagePreview] = useState(null)
@@ -28,19 +34,43 @@ export default function MenuManagement() {
         price_full: '',
         price_half: '',
         is_active: true,
+        stock_quantity: null,
         image: null
     })
 
+    const [recipeForm, setRecipeForm] = useState({
+        ingredients: [{ ingredient_id: '', quantity: '', unit: '' }]
+    })
+
+    const [stockForm, setStockForm] = useState({
+        action: 'produce',
+        quantity: ''
+    })
+
     useEffect(() => {
-        loadItems()
+        loadData()
     }, [])
 
-    async function loadItems() {
+    async function loadData() {
         try {
-            const data = await fetchFoodItems()
-            setItems(data.results || data || [])
+            const [itemsData, ingredientsData, recipesData] = await Promise.all([
+                fetchFoodItems(),
+                fetchIngredients(),
+                fetchRecipes().catch(() => ({ results: [] }))
+            ])
+
+            setItems(itemsData.results || itemsData || [])
+            setIngredients(ingredientsData.results || ingredientsData || [])
+
+            // Map recipes by food_item_id
+            const recipeMap = {}
+            const recipesList = recipesData.results || recipesData || []
+            recipesList.forEach(recipe => {
+                recipeMap[recipe.food_item] = recipe
+            })
+            setRecipes(recipeMap)
         } catch (err) {
-            toast.error('Failed to load menu items')
+            toast.error('Failed to load data')
         } finally {
             setLoading(false)
         }
@@ -56,6 +86,7 @@ export default function MenuManagement() {
             price_full: '',
             price_half: '',
             is_active: true,
+            stock_quantity: null,
             image: null
         })
         setImagePreview(null)
@@ -72,17 +103,43 @@ export default function MenuManagement() {
             price_full: item.price_full || '',
             price_half: item.price_half || '',
             is_active: item.is_active,
+            stock_quantity: item.stock_quantity,
             image: null
         })
         setImagePreview(item.image || null)
         setShowModal(true)
     }
 
+    function openRecipeModal(item) {
+        setRecipeItem(item)
+        const existingRecipe = recipes[item.id]
+
+        if (existingRecipe && existingRecipe.ingredients) {
+            setRecipeForm({
+                ingredients: existingRecipe.ingredients.map(ing => ({
+                    ingredient_id: ing.ingredient,
+                    quantity: ing.quantity,
+                    unit: ingredients.find(i => i.id === ing.ingredient)?.unit || 'g'
+                }))
+            })
+        } else {
+            setRecipeForm({
+                ingredients: [{ ingredient_id: '', quantity: '', unit: 'g' }]
+            })
+        }
+        setShowRecipeModal(true)
+    }
+
+    function openStockModal(item) {
+        setStockItem(item)
+        setStockForm({ action: 'produce', quantity: '' })
+        setShowStockModal(true)
+    }
+
     function handleImageChange(e) {
         const file = e.target.files[0]
         if (file) {
             setForm({ ...form, image: file })
-            // Create preview
             const reader = new FileReader()
             reader.onloadend = () => {
                 setImagePreview(reader.result)
@@ -106,7 +163,6 @@ export default function MenuManagement() {
 
         setSaving(true)
         try {
-            // Use FormData if image is included
             let payload
             if (form.image instanceof File) {
                 payload = new FormData()
@@ -117,14 +173,18 @@ export default function MenuManagement() {
                 payload.append('price_full', form.price_full || '')
                 payload.append('price_half', form.available_portions.includes('half') ? form.price_half : '')
                 payload.append('is_active', form.is_active)
+                if (form.stock_quantity !== null && form.stock_quantity !== '') {
+                    payload.append('stock_quantity', form.stock_quantity)
+                }
                 payload.append('image', form.image)
             } else {
                 payload = {
                     ...form,
                     price_full: form.price_full || null,
-                    price_half: form.available_portions.includes('half') ? form.price_half : null
+                    price_half: form.available_portions.includes('half') ? form.price_half : null,
+                    stock_quantity: form.stock_quantity !== '' ? form.stock_quantity : null
                 }
-                delete payload.image // Don't send null image
+                delete payload.image
             }
 
             if (editingItem) {
@@ -136,7 +196,7 @@ export default function MenuManagement() {
             }
 
             setShowModal(false)
-            loadItems()
+            loadData()
         } catch (err) {
             toast.error(err.message || 'Failed to save item')
         } finally {
@@ -148,9 +208,13 @@ export default function MenuManagement() {
         try {
             await toggleFoodItemActive(item.id)
             toast.success(`${item.name} ${item.is_active ? 'deactivated' : 'activated'}`)
-            loadItems()
+            loadData()
         } catch (err) {
-            toast.error('Failed to update item status')
+            if (err.message && err.message.includes('recipe')) {
+                toast.error(err.message)
+            } else {
+                toast.error('Failed to update item status')
+            }
         }
     }
 
@@ -161,6 +225,94 @@ export default function MenuManagement() {
                 : [...prev.available_portions, portion]
             return { ...prev, available_portions: portions.length > 0 ? portions : ['full'] }
         })
+    }
+
+    function addRecipeIngredient() {
+        setRecipeForm(prev => ({
+            ingredients: [...prev.ingredients, { ingredient_id: '', quantity: '', unit: 'g' }]
+        }))
+    }
+
+    function removeRecipeIngredient(index) {
+        setRecipeForm(prev => ({
+            ingredients: prev.ingredients.filter((_, i) => i !== index)
+        }))
+    }
+
+    function updateRecipeIngredient(index, field, value) {
+        setRecipeForm(prev => ({
+            ingredients: prev.ingredients.map((ing, i) =>
+                i === index ? { ...ing, [field]: value } : ing
+            )
+        }))
+    }
+
+    async function handleRecipeSubmit(e) {
+        e.preventDefault()
+
+        const validIngredients = recipeForm.ingredients.filter(
+            ing => ing.ingredient_id && ing.quantity
+        )
+
+        if (validIngredients.length < 2) {
+            toast.error('Recipe must have at least 2 ingredients')
+            return
+        }
+
+        setSaving(true)
+        try {
+            const payload = {
+                food_item: recipeItem.id,
+                ingredients: validIngredients.map(ing => ({
+                    ingredient: parseInt(ing.ingredient_id),
+                    quantity: parseFloat(ing.quantity)
+                }))
+            }
+
+            const existingRecipe = recipes[recipeItem.id]
+            if (existingRecipe) {
+                await updateRecipe(existingRecipe.id, payload)
+                toast.success('Recipe updated successfully')
+            } else {
+                await createRecipe(payload)
+                toast.success('Recipe created successfully')
+            }
+
+            setShowRecipeModal(false)
+            loadData()
+        } catch (err) {
+            toast.error(err.message || 'Failed to save recipe')
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    async function handleStockUpdate(e) {
+        e.preventDefault()
+
+        if (!stockForm.quantity || stockForm.quantity <= 0) {
+            toast.warning('Please enter a valid quantity')
+            return
+        }
+
+        setSaving(true)
+        try {
+            await apiFetch(`/api/food-items/${stockItem.id}/update_stock/`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: stockForm.action,
+                    quantity: parseInt(stockForm.quantity)
+                })
+            })
+
+            toast.success(`Stock ${stockForm.action === 'produce' ? 'produced' : 'updated'} successfully`)
+            setShowStockModal(false)
+            loadData()
+        } catch (err) {
+            toast.error(err.message || 'Failed to update stock')
+        } finally {
+            setSaving(false)
+        }
     }
 
     const filteredItems = items.filter(item =>
@@ -188,18 +340,54 @@ export default function MenuManagement() {
             )
         },
         {
-            header: 'Portions',
-            render: (row) => row.available_portions?.map(p => (
-                <Badge key={p} variant="primary" style={{ marginRight: '4px' }}>{p}</Badge>
-            ))
+            header: 'Recipe',
+            render: (row) => {
+                const hasRecipe = recipes[row.id]
+                const ingredientCount = hasRecipe?.ingredients?.length || 0
+                return hasRecipe ? (
+                    <Badge variant="success">{ingredientCount} ingredients</Badge>
+                ) : (
+                    <Badge variant="danger">No recipe</Badge>
+                )
+            }
         },
         {
-            header: 'Full Price',
-            render: (row) => row.price_full ? `Rs. ${row.price_full}` : '-'
+            header: 'Stock / Potential',
+            render: (row) => {
+                const maxProduceable = row.max_daily_production || 0
+
+                if (row.stock_quantity !== null && row.stock_quantity !== undefined) {
+                    return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <Badge variant={row.stock_quantity > 0 ? 'primary' : 'danger'}>
+                                Stock: {row.stock_quantity}
+                            </Badge>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                Can make: {maxProduceable}
+                            </span>
+                        </div>
+                    )
+                }
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <Badge variant={maxProduceable > 0 ? 'info' : 'danger'}>
+                            Available: {maxProduceable}
+                        </Badge>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            Made-to-order
+                        </span>
+                    </div>
+                )
+            }
         },
         {
-            header: 'Half Price',
-            render: (row) => row.price_half ? `Rs. ${row.price_half}` : '-'
+            header: 'Price',
+            render: (row) => (
+                <div>
+                    <div>Full: Rs. {row.price_full}</div>
+                    {row.price_half && <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)' }}>Half: Rs. {row.price_half}</div>}
+                </div>
+            )
         },
         {
             header: 'Status',
@@ -212,8 +400,12 @@ export default function MenuManagement() {
         ...(canEdit ? [{
             header: 'Actions',
             render: (row) => (
-                <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                <div style={{ display: 'flex', gap: 'var(--spacing-2)', flexWrap: 'wrap' }}>
                     <Button size="sm" variant="secondary" onClick={() => openEditModal(row)}>✏️ Edit</Button>
+                    <Button size="sm" variant="info" onClick={() => openRecipeModal(row)}>📋 Recipe</Button>
+                    {row.stock_quantity !== null && (
+                        <Button size="sm" variant="primary" onClick={() => openStockModal(row)}>📦 Stock</Button>
+                    )}
                     <Button
                         size="sm"
                         variant={row.is_active ? 'warning' : 'success'}
@@ -234,7 +426,7 @@ export default function MenuManagement() {
         <div>
             <PageHeader
                 title="Menu Management"
-                subtitle="Manage food items and prices"
+                subtitle="Manage food items, recipes, and stock"
                 actions={canEdit && <Button onClick={openAddModal}>+ Add Item</Button>}
             />
 
@@ -255,7 +447,7 @@ export default function MenuManagement() {
                 emptyMessage="No menu items found"
             />
 
-            {/* Add/Edit Modal */}
+            {/* Add/Edit Item Modal */}
             <Modal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
@@ -295,6 +487,19 @@ export default function MenuManagement() {
                             textarea
                             placeholder="Brief description of the item"
                         />
+                    </div>
+
+                    <div style={{ marginTop: 'var(--spacing-4)' }}>
+                        <Input
+                            label="Stock Quantity (optional - leave empty for made-to-order)"
+                            type="number"
+                            value={form.stock_quantity === null ? '' : form.stock_quantity}
+                            onChange={(e) => setForm({ ...form, stock_quantity: e.target.value === '' ? null : parseInt(e.target.value) })}
+                            placeholder="Leave empty for made-to-order items"
+                        />
+                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', marginTop: 'var(--spacing-1)' }}>
+                            Set a number for pre-made items (e.g., batch-cooked items). Leave empty for items made on demand.
+                        </div>
                     </div>
 
                     {/* Image Upload Section */}
@@ -368,6 +573,128 @@ export default function MenuManagement() {
                                 onChange={(e) => setForm({ ...form, price_half: e.target.value })}
                                 placeholder="0.00"
                             />
+                        )}
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Recipe Modal */}
+            <Modal
+                isOpen={showRecipeModal}
+                onClose={() => setShowRecipeModal(false)}
+                title={`Recipe for ${recipeItem?.name}`}
+                size="lg"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setShowRecipeModal(false)}>Cancel</Button>
+                        <Button onClick={handleRecipeSubmit} loading={saving}>
+                            Save Recipe
+                        </Button>
+                    </>
+                }
+            >
+                <form onSubmit={handleRecipeSubmit}>
+                    <div style={{ marginBottom: 'var(--spacing-3)', padding: 'var(--spacing-3)', backgroundColor: 'var(--warning-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--warning-border)' }}>
+                        <strong>⚠️ Important:</strong> Menu items require at least 2 ingredients to be activated.
+                    </div>
+
+                    {recipeForm.ingredients.map((ing, index) => (
+                        <div key={index} style={{ display: 'flex', gap: 'var(--spacing-2)', marginBottom: 'var(--spacing-3)', alignItems: 'flex-end' }}>
+                            <div style={{ flex: 2 }}>
+                                <Select
+                                    label={index === 0 ? 'Ingredient' : ''}
+                                    value={ing.ingredient_id}
+                                    onChange={(e) => updateRecipeIngredient(index, 'ingredient_id', e.target.value)}
+                                    required
+                                >
+                                    <option value="">Select ingredient...</option>
+                                    {ingredients.map(ingredient => (
+                                        <option key={ingredient.id} value={ingredient.id}>
+                                            {ingredient.name} ({ingredient.unit})
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <Input
+                                    label={index === 0 ? 'Quantity' : ''}
+                                    type="number"
+                                    step="0.001"
+                                    value={ing.quantity}
+                                    onChange={(e) => updateRecipeIngredient(index, 'quantity', e.target.value)}
+                                    placeholder="0.0"
+                                    required
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                variant="danger"
+                                size="sm"
+                                onClick={() => removeRecipeIngredient(index)}
+                                disabled={recipeForm.ingredients.length === 1}
+                            >
+                                ✕
+                            </Button>
+                        </div>
+                    ))}
+
+                    <Button type="button" variant="secondary" onClick={addRecipeIngredient}>
+                        + Add Ingredient
+                    </Button>
+                </form>
+            </Modal>
+
+            {/* Stock Management Modal */}
+            <Modal
+                isOpen={showStockModal}
+                onClose={() => setShowStockModal(false)}
+                title={`Manage Stock: ${stockItem?.name}`}
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setShowStockModal(false)}>Cancel</Button>
+                        <Button onClick={handleStockUpdate} loading={saving}>
+                            Update Stock
+                        </Button>
+                    </>
+                }
+            >
+                <form onSubmit={handleStockUpdate}>
+                    {stockItem && (
+                        <div style={{ marginBottom: 'var(--spacing-4)', padding: 'var(--spacing-3)', backgroundColor: 'var(--gray-50)', borderRadius: 'var(--radius-md)' }}>
+                            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Current Stock</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary-600)' }}>
+                                {stockItem.stock_quantity || 0} units
+                            </div>
+                        </div>
+                    )}
+
+                    <Select
+                        label="Action"
+                        value={stockForm.action}
+                        onChange={(e) => setStockForm({ ...stockForm, action: e.target.value })}
+                    >
+                        <option value="produce">Produce (deduct ingredients)</option>
+                        <option value="correct">Manual Adjustment</option>
+                    </Select>
+
+                    <div style={{ marginTop: 'var(--spacing-3)' }}>
+                        <Input
+                            label="Quantity"
+                            type="number"
+                            value={stockForm.quantity}
+                            onChange={(e) => setStockForm({ ...stockForm, quantity: e.target.value })}
+                            placeholder="Enter quantity"
+                            required
+                        />
+                        {stockForm.action === 'produce' && (
+                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', marginTop: 'var(--spacing-1)' }}>
+                                This will deduct ingredients from inventory according to the recipe.
+                            </div>
+                        )}
+                        {stockForm.action === 'correct' && (
+                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', marginTop: 'var(--spacing-1)' }}>
+                                Use negative numbers to reduce stock. This does not affect ingredients.
+                            </div>
                         )}
                     </div>
                 </form>

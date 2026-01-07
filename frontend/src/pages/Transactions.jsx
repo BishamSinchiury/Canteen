@@ -100,7 +100,7 @@ export default function Transactions() {
         },
         {
             header: 'Items',
-            render: (row) => row.lines?.length || 0
+            render: (row) => row.lines?.map(l => `${l.food_item_name} (x${l.quantity})`).join(', ') || '-'
         },
         {
             header: 'Payment',

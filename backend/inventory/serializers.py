@@ -1,11 +1,18 @@
 from rest_framework import serializers
 from decimal import Decimal
-from .models import Vendor, Ingredient, StockMovement, Recipe, RecipeIngredient, PurchaseOrder, PurchaseOrderItem
+from .models import Vendor, Ingredient, StockMovement, Recipe, RecipeIngredient, PurchaseOrder, PurchaseOrderItem, VendorTransaction
 from menu.models import FoodItem
 
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
+        fields = '__all__'
+
+class VendorTransactionSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.ReadOnlyField(source='created_by.username')
+    
+    class Meta:
+        model = VendorTransaction
         fields = '__all__'
 
 class IngredientSerializer(serializers.ModelSerializer):

@@ -5,9 +5,15 @@ from .models import FoodItem
 class FoodItemSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True, use_url=True)
     
+    max_daily_production = serializers.SerializerMethodField()
+    
     class Meta:
         model = FoodItem
         fields = '__all__'
+        extra_fields = ['max_daily_production']
+        
+    def get_max_daily_production(self, obj):
+        return obj.calculate_max_available()
 
     def validate(self, data):
         portions = data.get('available_portions', [])

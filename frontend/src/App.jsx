@@ -10,6 +10,8 @@ import {
   Transactions,
   TransactionDetail,
   MenuManagement,
+  MenuItemStock,
+  MenuItemStockManagement,
   StudentAccounts,
   TeacherAccounts,
   AccountDetail,
@@ -19,6 +21,7 @@ import {
   Users,
   Setup,
   Vendors,
+  VendorLedger,
   Ingredients,
   Recipes,
   PurchaseOrders
@@ -38,6 +41,8 @@ function App() {
             <Route path="/transactions" element={<Layout><Transactions /></Layout>} />
             <Route path="/transactions/:id" element={<Layout><TransactionDetail /></Layout>} />
             <Route path="/menu" element={<Layout><MenuManagement /></Layout>} />
+            <Route path="/menu/stock" element={<Layout><MenuItemStock /></Layout>} />
+            <Route path="/menu/stock-management" element={<Layout><MenuItemStockManagement /></Layout>} />
             <Route path="/accounts/students" element={<Layout><StudentAccounts /></Layout>} />
             <Route path="/accounts/teachers" element={<Layout><TeacherAccounts /></Layout>} />
             <Route path="/accounts/:id" element={<Layout><AccountDetail /></Layout>} />
@@ -47,6 +52,7 @@ function App() {
             <Route path="/users" element={<Layout><Users /></Layout>} />
 
             <Route path="/inventory/vendors" element={<Layout><Vendors /></Layout>} />
+            <Route path="/inventory/vendors/:id/ledger" element={<Layout><VendorLedger /></Layout>} />
             <Route path="/inventory/ingredients" element={<Layout><Ingredients /></Layout>} />
             <Route path="/inventory/recipes" element={<Layout><Recipes /></Layout>} />
             <Route path="/inventory/purchase-orders" element={<Layout><PurchaseOrders /></Layout>} />

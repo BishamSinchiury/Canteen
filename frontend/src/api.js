@@ -27,7 +27,29 @@ export async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({ detail: res.statusText }))
-    const err = new Error(data.detail || 'API error')
+
+    // Extract error message from various formats
+    let errorMessage = data.detail || data.error || data.message || 'API error'
+
+    // Handle non_field_errors array
+    if (data.non_field_errors && Array.isArray(data.non_field_errors)) {
+      errorMessage = data.non_field_errors.join(', ')
+    }
+
+    // Handle field-specific errors
+    if (!errorMessage || errorMessage === 'API error') {
+      const fieldErrors = Object.entries(data)
+        .filter(([key]) => key !== 'detail' && key !== 'error')
+        .map(([key, value]) => {
+          const msg = Array.isArray(value) ? value.join(', ') : value
+          return `${key}: ${msg}`
+        })
+      if (fieldErrors.length > 0) {
+        errorMessage = fieldErrors.join('; ')
+      }
+    }
+
+    const err = new Error(errorMessage)
     err.status = res.status
     err.data = data
     throw err
@@ -112,6 +134,10 @@ export async function toggleFoodItemActive(id) {
 
 export async function fetchCategories() {
   return apiFetch('/api/food-items/categories/')
+}
+
+export async function getFoodItemAvailability(id) {
+  return apiFetch(`/api/food-items/${id}/availability/`)
 }
 
 // ============ Transactions ============
@@ -360,6 +386,10 @@ export async function updateVendor(id, data) {
   })
 }
 
+export async function fetchVendorTransactions(vendorId) {
+  return apiFetch(`/api/inventory/vendor-transactions/?vendor=${vendorId}`)
+}
+
 export async function fetchIngredients(params = '') {
   return apiFetch(`/api/inventory/ingredients/${params}`)
 }
@@ -404,6 +434,13 @@ export async function fetchRecipe(id) {
 export async function createRecipe(data) {
   return apiFetch('/api/inventory/recipes/', {
     method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function updateRecipe(id, data) {
+  return apiFetch(`/api/inventory/recipes/${id}/`, {
+    method: 'PATCH',
     body: JSON.stringify(data)
   })
 }

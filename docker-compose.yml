@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=canteen_db
+      - POSTGRES_USER=canteen_user
+      - POSTGRES_PASSWORD=canteen@1011
+    restart: always
+
+  backend:
+    build: 
+      context: ./backend
+    command: gunicorn canteen.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - media_volume:/app/media
+      - static_volume:/app/staticfiles
+    environment:
+      - DATABASE_URL=postgres://canteen_user:canteen@1011@db:5432/canteen_db
+      - SECRET_KEY=prod-secret-key-change-this
+      - DEBUG=False
+      - ALLOWED_HOSTS=*
+    depends_on:
+      - db
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "80:80"
+    volumes:
+      - media_volume:/app/media
+      - static_volume:/app/staticfiles
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:
+  media_volume:
+  static_volume:
